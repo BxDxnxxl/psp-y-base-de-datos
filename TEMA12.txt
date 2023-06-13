@@ -1,0 +1,417 @@
+1º EJEMPLO:
+
+
+DECLARE
+CURSOR curl IS
+SELECT dnombre, loc FROM depart; 
+v_nombre VARCHAR2(14);
+v_localidad VARCHAR2(14);
+BEGIN
+OPEN curl; --2.Abrir
+LOOP
+FETCH curl INTO v_nombre, v_localidad; 
+EXIT WHEN curl%NOTFOUND;
+DBMS_OUTPUT.PUT_LINE (v_nombre ||'*'||v_localidad);
+END LOOP;
+CLOSE curl; 
+END;
+
+
+1º CASO PRACTICO: 
+
+
+DECLARE
+CURSOR c1 IS
+SELECT apellido FROM emple WHERE dept_no=20;
+v_apellido VARCHAR2(10);
+BEGIN
+OPEN c1;
+LOOP
+FETCH c1 INTO v_apellido;
+DBMS_OUTPUT.PUT_LINE(TO_CHAR(c1%ROWCOUNT,'99.')
+||v_apellido);
+EXIT WHEN c1%NOTFOUND;
+END LOOP;
+CLOSE C1;
+END;
+
+
+2º CASO PRACTICO
+
+
+CREATE OR REPLACE PROCEDURE ver_emple_por_dept (
+dep VARCHAR2)
+AS
+v_dept NUMBER(2);
+CURSOR c1 IS
+SELECT apellido FROM emple WHERE dept_no = v_dept;
+v_apellido VARCHAR2(10);
+BEGIN
+v_dept := dep;
+OPEN c1;
+FETCH c1 INTO v_apellido;
+WHILE c1%FOUND LOOP
+DBMS_OUTPUT.PUT_LINE(v_apellido);
+FETCH c1 INTO v_apellido;
+END LOOP;
+CLOSE c1;
+END;
+
+
+3º CASO PRACTICO
+
+
+DECLARE
+CURSOR c_emple IS
+SELECT apellido, fecha_alt FROM emple
+ORDER BY fecha_alt;
+v_reg_emp c_emple%ROWTYPE;
+BEGIN
+OPEN c_emple;
+FETCH c_emple INTO v_reg_emp;
+WHILE c_emple%FOUND LOOP
+DBMS_OUTPUT.PUT_LINE(v_reg_emp.apellido||'*'||
+v_reg_emp.fecha_alt);
+FETCH c_emple INTO v_reg_emp;
+END LOOP;
+CLOSE c_emple;
+
+
+4º CASO PRACTICO 
+
+
+5ºCASO PRACTICO 
+
+
+CREATE OR REPLACE
+PROCEDURE subir_salario(
+num_empleado INTEGER,
+incremento REAL)
+IS
+salario_actual REAL;
+salario_nulo EXCEPTION;
+BEGIN
+SELECT salario INTO salario_actual FROM emple
+WHERE emp_no = num_empleado;
+IF salario_actual IS NULL THEN
+RAISE salario_nulo; -- levanta salario_nulo
+END IF;
+UPDATE emple SET salario = salario + incremento
+WHERE emp_no = num_empleado;
+
+
+6ºCASO PRACTICO
+
+
+DECLARE
+cod_err number(6);
+vnif varchar2(10);
+vnom varchar2(15);
+err_blancos EXCEPTION;
+no_hay_espacio EXCEPTION;
+PRAGMA EXCEPTION_INIT(no_hay_espacio, -1547);
+BEGIN
+SELECT col1, col2 INTO vnif, vnom FROM TEMP2;
+IF SUBSTR(vnom,1,1) <= ' ' THEN
+RAISE err_blancos;
+END IF;
+UPDATE clientes SET nombre = vnom WHERE nif = vnif;
+EXCEPTION
+WHEN err_blancos THEN
+INSERT INTO temp2(col1) VALUES ('ERR blancos');
+WHEN no_hay_espacio THEN
+INSERT INTO temp2(col1) VALUES ('ERR tablespace');
+WHEN NO_DATA_FOUND THEN
+INSERT INTO temp2(col1) VALUES ('ERR no habia datos');
+WHEN TOO_MANY_ROWS THEN
+INSERT INTO temp2(col1) VALUES ('ERdemasiados datos');
+WHEN OTHERS THEN
+cod_err := SQLCODE;
+INSERT INTO temp2(col1) VALUES (cod_err);
+END;
+
+
+7ºCASO PRACTICO
+
+
+CREATE OR REPLACE
+PROCEDURE subir_sueldo
+(Num_emple NUMBER, incremento NUMBER)
+IS
+salario_actual NUMBER;
+BEGIN
+SELECT salario INTO salario_actual FROM empleados
+WHERE emp_no = num_emple;
+IF salario_actual IS NULL THEN
+RAISE_APPLICATION_ERROR(-20010, ' Salario Nulo');
+ELSE
+UPDATE empleados SET sueldo = salario_actual +
+incremento WHERE emp_no = num_emple;
+ENDIF
+END subir_sueldo;
+
+
+1º ACTIVIDAD PROPUESTA
+
+
+
+2º ACTIVIDAD PROPUESTA
+
+
+CREATE OR REPLACE PROCEDURE mostrar_empleados (cadena_apellido IN VARCHAR2)
+IS
+  v_cadena_apellido VARCHAR2(50) := '%' || cadena_apellido || '%';
+  CURSOR c_empleados IS
+    SELECT apellido, num_empleado
+    FROM empleados
+    WHERE apellido LIKE v_cadena_apellido;
+
+  v_apellido empleados.apellido%TYPE;
+  v_num_empleado empleados.num_empleado%TYPE;
+  v_contador NUMBER := 0;
+BEGIN
+
+  OPEN c_empleados;
+  
+  LOOP
+    FETCH c_empleados INTO v_apellido, v_num_empleado;
+    EXIT WHEN c_empleados%NOTFOUND;
+    v_contador := v_contador + 1;
+    DBMS_OUTPUT.PUT_LINE(v_apellido || ', ' || v_num_empleado);
+  END LOOP;
+  
+  CLOSE c_empleados;
+  DBMS_OUTPUT.PUT_LINE('Número de empleados encontrados: ' || v_contador);
+END;
+
+
+3º ACTIVIDAD PROPUESTA
+
+DECLARE
+CURSOR c_emple IS
+SELECT apellido, fecha_alt FROM emple
+ORDER BY fecha_alt;
+BEGIN
+FOR v_reg_emp IN c_emple LOOP
+DBMS_OUTPUT.PUT_LINE(v_reg_emp.apellido||'*'||
+v_reg_emp.fecha_alt);
+END LOOP;
+END;
+
+4º ACTIVIDAD PROPUESTA
+
+
+CREATE OR REPLACE PROCEDURE incrementar_salario(p_departamento IN NUMBER, p_incremento IN NUMBER)
+IS
+  v_contador NUMBER := 0;
+BEGIN
+  FOR emp IN (SELECT ROWID, salario FROM empleados WHERE departamento = p_departamento)
+  LOOP
+    UPDATE empleados
+    SET salario = emp.salario + p_incremento
+    WHERE ROWID = emp.ROWID;
+    v_contador := v_contador + SQL%ROWCOUNT;
+  END LOOP
+  DBMS_OUTPUT.PUT_LINE('Número de filas afectadas: ' || v_contador);
+END;
+
+
+
+EJERCICIOS DE FINAL DE TEMA:
+
+
+EJRCICIO 1
+
+CREATE OR REPLACE PROCEDURE ver_emple
+AS
+CURSOR c_emple IS
+SELECT APELLIDO, FECHA_ALT
+FROM EMPLE
+ORDER BY APELLIDO;
+v_apellido VARCHAR2(10);
+v_fecha DATE;
+BEGIN
+OPEN c_emple;
+FETCH c_emple into v_apellido, v_fecha;
+WHILE c_emple%FOUND LOOP
+DBMS_OUTPUT.PUT_LINE( v_apellido||' * '||v_fecha);
+FETCH c_emple into v_apellido,v_fecha;
+END LOOP;
+CLOSE c_emple;
+END ver_emple;
+
+EJERCICIO2
+
+CREATE OR REPLACE PROCEDURE ver_emple_depart
+AS
+CURSOR c_emple IS
+SELECT dnombre, COUNT(emp_no)
+FROM emple e, depart d
+WHERE d.dept_no = e.dept_no(+)
+GROUP BY dnombre;
+v_dnombre depart.dnombre%TYPE;
+v_num_emple BINARY_INTEGER;
+BEGIN
+OPEN c_emple;
+FETCH c_emple into v_dnombre, v_num_emple;
+WHILE c_emple%FOUND LOOP
+DBMS_OUTPUT.PUT_LINE(v_dnombre||' * '||v_num_emple);
+FETCH c_emple into v_dnombre,v_num_emple;
+END LOOP;
+CLOSE c_emple;
+END ver_emple_depart;
+
+EJERCICIO 3
+
+CREATE OR REPLACE PROCEDURE 5EMP
+AS
+CURSOR c_emp IS
+SELECT apellido, salario FROM emple
+ORDER BY salario DESC;
+vr_emp c_emp%ROWTYPE;
+i NUMBER;
+BEGIN
+i:=1;
+OPEN c_emp;
+FETCH c_emp INTO vr_emp;
+WHILE c_emp%FOUND AND i<=5 LOOP
+DBMS_OUTPUT.PUT_LINE(vr_emp.apellido ||' * '|| vr_emp.salario);
+FETCH c_emp INTO vr_emp;
+i:=I+1;
+END LOOP;
+CLOSE c_emp;
+END 5EMP;
+
+EJERCICIO 4
+
+CREATE OR REPLACE PROCEDURE MENOS_PASTA
+AS
+CURSOR c_emp IS
+SELECT apellido, oficio, salario FROM emple
+ORDER BY oficio, salario;
+vr_emp c_emp%ROWTYPE;
+oficio_ant EMPLE.OFICIO%TYPE;
+i NUMBER;
+BEGIN
+OPEN c_emp;
+oficio_ant:='*';
+FETCH c_emp INTO vr_emp;
+WHILE c_emp%FOUND LOOP
+IF oficio_ant <> vr_emp.oficio THEN
+oficio_ant := vr_emp.oficio;
+i := 1;
+END IF;
+IF i <= 2 THEN
+DBMS_OUTPUT.PUT_LINE(vr_emp.oficio||' * '
+||vr_emp.apellido||' * '
+||vr_emp.salario);
+END IF;
+FETCH c_emp INTO vr_emp;
+i:=I+1;
+END LOOP;
+CLOSE c_emp;
+END MENOS_PASTA;
+
+
+EJERCICIO 5
+
+CREATE OR REPLACE PROCEDURE insertar_depart(
+nombre_dep VARCHAR2,
+loc VARCHAR2)
+AS
+CURSOR c_dep IS SELECT dnombre
+FROM depart WHERE dnombre = nombre_dep;
+v_dummy DEPART.DNOMBRE%TYPE DEFAULT NULL;
+v_ulti_num DEPART.DEPT_NO%TYPE;
+nombre_duplicado EXCEPTION;
+
+
+
+BEGIN
+
+OPEN c_dep;
+FETCH c_dep INTO v_dummy;
+CLOSE c_dep;
+IF v_dummy IS NOT NULL THEN
+RAISE nombre_duplicado;
+END IF;
+SELECT MAX(dept_no) INTO v_ulti_num FROM depart;
+INSERT INTO depart VALUES ((TRUNC(v_ulti_num, -1)+10)
+, nombre_dep, loc);
+EXCEPTION
+WHEN nombre_duplicado THEN
+DBMS_OUTPUT.PUT_LINE('Err. departamento duplicado');
+RAISE;
+WHEN OTHERS THEN
+RAISE_APPLICATION_ERROR(-20005,'Err. Operación cancelada’);
+END insertar_depart;
+
+EJERCICIO 6
+
+CREATE OR REPLACE PROCEDURE subida_sal(
+num_depar emple.dept_no%TYPE,
+importe NUMBER,
+porcentaje NUMBER)
+AS
+CURSOR c_sal IS SELECT salario,ROWID
+FROM emple WHERE dept_no = num_depar;
+vr_sal c_sal%ROWTYPE;
+v_imp_pct NUMBER(10);
+BEGIN
+OPEN c_sal;
+FETCH c_sal INTO vr_sal;
+WHILE c_sal%FOUND LOOP
+v_imp_pct :=
+GREATEST((vr_sal.salario/100)*porcentaje,
+v_imp_pct);
+UPDATE EMPLE SET SALARIO=SALARIO + v_imp_pct
+WHERE ROWID = vr_sal.rowid;
+FETCH c_sal INTO vr_sal;
+END LOOP;
+CLOSE c_sal;
+EXCEPTION
+WHEN NO_DATA_FOUND THEN
+DBMS_OUTPUT.PUT_LINE('Err. ninguna fila actualizada');
+END subida_sal;
+
+EJERCICIO 7
+
+CREATE OR REPLACE PROCEDURE subida50
+AS
+CURSOR c_ofi_sal IS
+SELECT oficio, AVG(salario) salario FROM emple
+GROUP BY oficio;
+CURSOR c_emp_sal IS
+SELECT oficio, salario FROM emple E1
+WHERE salario <
+(SELECT AVG(salario) FROM emple E2
+WHERE E2.oficio = E1.oficio)
+ORDER BY oficio, salario FOR UPDATE OF salario;
+vr_ofi_sal c_ofi_sal%ROWTYPE;
+vr_emp_sal c_emp_sal%ROWTYPE;
+v_incremento emple.salario%TYPE;
+BEGIN
+COMMIT;
+OPEN c_emp_sal;
+FETCH c_emp_sal INTO vr_emp_sal;
+OPEN c_ofi_sal;
+FETCH c_ofi_sal INTO vr_ofi_sal;
+WHILE c_ofi_sal%FOUND AND c_emp_sal%FOUND LOOP
+v_incremento :=
+(vr_ofi_sal.salario - vr_emp_sal.salario) / 2;
+UPDATE emple SET salario = salario + v_incremento
+WHERE CURRENT OF c_emp_sal;
+FETCH c_emp_sal INTO vr_emp_sal;
+IF c_ofi_sal%FOUND and
+vr_ofi_sal.oficio <> vr_emp_sal.oficio THEN
+FETCH c_ofi_sal INTO vr_ofi_sal;
+END IF;
+END LOOP;
+CLOSE c_emp_sal;
+CLOSE c_ofi_sal;
+COMMIT;
+EXCEPTION
+WHEN OTHERS THEN
+ROLLBACK WORK;
+RAISE;
+END subida50;
